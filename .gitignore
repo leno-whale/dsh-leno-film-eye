@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 .tmp-test/
 film-out/
 *.mp4
@@ -6,4 +6,11 @@ film-out/
 *.webm
 *.flv
 _tmp/
+_scratch/
+
+# 文献原文（PDF 留在本地，不进仓库；转录稿 .md 进仓库当引用依据）
 docs/literature/*.pdf
+docs/literature/pdf/
+
+# 思考的中间产物：问题清单、各轮读书笔记、审查报告（留在本地，不进仓库）
+docs/reading-notes/
