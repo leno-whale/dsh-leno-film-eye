@@ -6,3 +6,4 @@ film-out/
 *.webm
 *.flv
 _tmp/
+docs/literature/*.pdf
