@@ -18,12 +18,17 @@
 | 2 | Emosical: An Emotion-Annotated Musical Theatre Dataset | Findings of EMNLP 2024, pp. 4169–4180 | `emosical-2024-findings-emnlp.pdf` | 摘要已读 |
 | 3 | （音乐情绪多输出基准，Neural Computing and Applications 2026） | Springer, doi 10.1007/s00521-026-12370-y | `mer-multi-output-2026-springer-s00521.pdf` | 摘要待读 |
 | 4 | EMID: An Emotional Aligned Dataset in Audio-Visual Modality | ACM MM Workshop McGE 2023, arXiv 2308.07622 | `emid-2023-arxiv-2308.07622.pdf` | 摘要已读 |
+| 5 | GlobalMood: A cross-cultural benchmark for music emotion recognition | ISMIR 2025, arXiv 2505.09539 | `globalmood-2025-arxiv-2505.09539.pdf` | 未读 |
+| 6 | Developing a benchmark for emotional analysis of music（DEAM） | Aljanaki, Yang & Soleymani 2017, PLoS ONE 12(3): e0173392 | `deam-2017-plosone-e0173392.pdf` | 未读 |
+| 7 | ITU-R BS.1770-5：节目响度与真峰值的测量算法 | ITU-R 建议书，2023-11 | `itu-r-bs1770-5-2023.pdf` | 未读 |
+| 8 | EBU R 128：响度归一化与最大允许电平 | EBU 技术建议，2014 | `ebu-r128-2014.pdf` | 未读 |
 
 ## 没拿到
 
 | 文献 | 原因 | 备注 |
 |---|---|---|
-| ISMIR 论文（静态 valence-arousal 标注，`final_papers/308.pdf`） | HTTP 404 | 需要另找入口或人工取 |
+| GlobalMood（ISMIR `final_papers/308.pdf`） | HTTP 404 | 已改用 arXiv 2505.09539 下到，见 #5 |
+| Zentner, Grandjean & Scherer (2008), *Emotions evoked by the sound of music*, Emotion 8(4):494–521（GEMS） | APA 付费墙；OpenAlex 与 Semantic Scholar 均无开放版 | **需要人工取**（机构登录）。它是「离散 vs 维度」之外的第三条路（九因子模型） |
 
 ## 已经改变我骨架的结论
 
