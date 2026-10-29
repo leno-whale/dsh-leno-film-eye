@@ -1,0 +1,33 @@
+{
+  "name": "dsh-leno-film-eye",
+  "version": "0.2.1",
+  "description": "让 agent 真正'看'视频：连续拼图、声音曲线、镜头节奏。只依赖 ffmpeg/ffprobe，不联网。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leno-whale/dsh-leno-film-eye.git"
+  },
+  "author": "leno <https://github.com/leno-whale>",
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
