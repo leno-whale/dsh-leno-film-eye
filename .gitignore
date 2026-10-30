@@ -8,9 +8,14 @@ film-out/
 _tmp/
 _scratch/
 
-# 文献原文（PDF 留在本地，不进仓库；转录稿 .md 进仓库当引用依据）
+# 文献原文与转录稿只在本地（仓库只留一份《文献使用说明》）
 docs/literature/*.pdf
+docs/literature/*.md
+!docs/literature/README.md
 docs/literature/pdf/
 
-# 思考的中间产物：问题清单、各轮读书笔记、审查报告（留在本地，不进仓库）
+# 思考与审核的中间产物：读书笔记、问题清单、审核意见、修订汇报、落地建议（留本地）
 docs/reading-notes/
+docs/theory/审核.md
+docs/theory/落地建议.md
+docs/theory/v2.1修订汇报.md
