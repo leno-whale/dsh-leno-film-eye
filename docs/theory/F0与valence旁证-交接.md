@@ -53,7 +53,7 @@ bundle 在 `gpu/`（runbook 逐行可粘贴）；环境单卡 PyTorch；
 
 ## 六、什么能打死它（照抄纪律）
 
-1. **域偏移**：情绪模型训练分布是西方流行乐（MTG-Jamondo/MSD 系），中文 MV/BGM 上
+1. **域偏移**：情绪模型训练分布是西方流行乐（MTG-Jamendo/MSD 系），中文 MV/BGM 上
    sanity 门不过即作废——不调参救。
 2. **CREPE 对纯配乐段失效**：它是人声训练的 pitch tracker；无人声段 F0 读数标 `voiced`
    低信度，判读时只看 voiced ≥0.3 的窗。
