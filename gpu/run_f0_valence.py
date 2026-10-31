@@ -11,7 +11,8 @@
 # 判读先写死（跑之前落纸，与 docs/theory/F0与valence旁证-交接.md 一致）：
 #   sanity 门：corr(m_arousal, db) ≥ 0.5。不过 → 报 no-transfer，实验二全部作废不算数。
 #   实验一：塌事件 = 4s 窗 db 比上一窗跌 ≥6 dB；F0 行为 = 窗中位半音相对上一窗
-#           变化 |Δst| ≥1 记「伴随沉」（方向另行报）。
+#           变化 ≥1 且方向为降（down）才记「伴随沉」；|Δst|>12 视作八度误判，判不了。
+#           分母只算可判事件（前后窗都有定音），未定音另报 p_undecidable。
 #           ≥50% 塌事件伴随 → 盲区代价大；<20% → 实际盲区小；中间 → 灰区，只报数。
 #   实验二：valence 窗间标准差 <0.05（模型原尺度）→ 此素材 valence 携带信息少，
 #           报 low-signal；否则给 top-10 valence 移动时刻（按 |Δv| 排）。
@@ -192,28 +193,38 @@ def run_one(path, out_dir, do_emotion=True):
             "m_valence": round(va, 3) if va == va else None,
         })
 
-    # 事件表：塌 = db 一窗跌 ≥6；伴随沉 = 窗中位半音相对上一窗 |Δ| ≥1
+    # 事件表：塌 = db 一窗跌 ≥6；伴随沉 = 窗中位半音相对上一窗降 ≥1
+    # 方向必须为 down；|Δ|>12 视为八度误判 → 记 null（判不了）
     events = []
     for i in range(1, n):
         drop = db[i] - db[i - 1]
         if drop <= -6:
             dst = (fw[i][0] - fw[i - 1][0]) if (fw[i][0] == fw[i][0] and fw[i - 1][0] == fw[i - 1][0]) else float("nan")
+            decidable = dst == dst and abs(dst) <= 12
             events.append({
                 "t": float(ts[i]), "drop_db": round(float(drop), 1),
-                "f0_delta_st": round(dst, 2) if dst == dst else None,
-                "with_sink": (abs(dst) >= 1) if dst == dst else None,
-                "f0_dir": ("down" if dst < 0 else "up") if dst == dst and abs(dst) >= 1 else None,
+                "prev_db": round(float(db[i - 1]), 1),
+                "f0_delta_st": round(dst, 2) if decidable else None,
+                "with_sink": bool(dst <= -1) if decidable else None,
+                "f0_dir": ("down" if dst < 0 else "up") if decidable else None,
             })
 
     # 汇总 + sanity 门 + 判读
     summ = {"file": path.name, "f0_meter": f0_src, "emo_meter": emo_src,
             "n_windows": n, "n_events": len(events)}
     if events:
-        with_sink = [e for e in events if e["with_sink"]]
-        summ["p_with_sink"] = round(len(with_sink) / len(events), 2)
-        summ["read_exp1"] = ("盲区代价大（≥50%）" if summ["p_with_sink"] >= 0.5
-                             else "实际盲区小（<20%）" if summ["p_with_sink"] < 0.2
-                             else "灰区，只报数")
+        decided = [e for e in events if e["with_sink"] is not None]
+        sinks = [e for e in decided if e["with_sink"]]
+        summ["n_decided"] = len(decided)
+        summ["n_undecidable"] = len(events) - len(decided)
+        summ["p_undecidable"] = round(1 - len(decided) / len(events), 2)
+        if decided:
+            summ["p_with_sink"] = round(len(sinks) / len(decided), 2)
+            summ["read_exp1"] = ("盲区代价大（≥50%）" if summ["p_with_sink"] >= 0.5
+                                 else "实际盲区小（<20%）" if summ["p_with_sink"] < 0.2
+                                 else "灰区，只报数")
+        else:
+            summ["read_exp1"] = "insufficient：无一条可判（全部未定音或八度误判）"
     if emo and n > 2:
         v = np.array([r["m_valence"] for r in rows if r["m_valence"] is not None])
         a = np.array([r["m_arousal"] for r in rows if r["m_arousal"] is not None])
