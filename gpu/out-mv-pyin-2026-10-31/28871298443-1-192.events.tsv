@@ -1,0 +1,26 @@
+[
+ {
+  "t": 84.0,
+  "drop_db": -8.9,
+  "prev_db": -16.9,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 208.0,
+  "drop_db": -26.8,
+  "prev_db": -18.4,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 212.0,
+  "drop_db": -27.6,
+  "prev_db": -45.2,
+  "f0_delta_st": 1.8,
+  "with_sink": false,
+  "f0_dir": "up"
+ }
+]
