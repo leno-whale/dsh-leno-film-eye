@@ -66,28 +66,38 @@ def semitone(hz):
 
 
 def f0_track(path):
-    """优先 torchcrepe（GPU），失败回退 librosa pyin。返回 (f0[n_frames_hop10ms], 来源标签)。"""
+    """降级链：torchcrepe-full@128 → torchcrepe-tiny@256 → librosa pyin。
+    vGPU 只有 ~2.4G 显存，batch 512 会 OOM——128/256 是按它写的。
+    返回 (f0[n_frames_hop10ms], 来源标签含模型档)。"""
     try:
         import torch
         import torchcrepe
         audio = ffmpeg_decode(path, F0_RATE)
         t = torch.tensor(audio, dtype=torch.float32).unsqueeze(0)
         dev = "cuda" if torch.cuda.is_available() else "cpu"
-        f0, conf = torchcrepe.predict(
-            t, F0_RATE, hop_length=F0_HOP, batch_size=512,
-            device=dev, return_periodicity=True)
-        f0 = f0.squeeze(0).detach().cpu().numpy().astype(float)
-        conf = conf.squeeze(0).detach().cpu().numpy().astype(float)
-        f0[conf < VOICED_CONF] = np.nan
-        print(f"    F0: torchcrepe on {dev}")
-        return f0, "torchcrepe"
+        for capacity, batch in (("full", 128), ("tiny", 256)):
+            try:
+                f0, conf = torchcrepe.predict(
+                    t, F0_RATE, hop_length=F0_HOP, batch_size=batch,
+                    device=dev, model=capacity, return_periodicity=True)
+                f0 = f0.squeeze(0).detach().cpu().numpy().astype(float)
+                conf = conf.squeeze(0).detach().cpu().numpy().astype(float)
+                f0[conf < VOICED_CONF] = np.nan
+                print(f"    F0: torchcrepe-{capacity} on {dev} (batch {batch})")
+                return f0, f"torchcrepe-{capacity}"
+            except RuntimeError as e:  # 显存不够 → 降档
+                print(f"    [warn] torchcrepe-{capacity} 失败（{str(e)[:80]}），降档", file=sys.stderr)
+                try:
+                    torch.cuda.empty_cache()
+                except Exception:  # noqa: BLE001
+                    pass
     except Exception as e:  # noqa: BLE001
         print(f"    [warn] torchcrepe 不可用（{e}），回退 pyin", file=sys.stderr)
-        import librosa
-        audio = ffmpeg_decode(path, F0_RATE)
-        f0, _, _ = librosa.pyin(audio, fmin=65, fmax=1100,
-                                sr=F0_RATE, hop_length=F0_HOP)
-        return np.asarray(f0, dtype=float), "pyin"
+    import librosa
+    audio = ffmpeg_decode(path, F0_RATE)
+    f0, _, _ = librosa.pyin(audio, fmin=65, fmax=1100, sr=F0_RATE, hop_length=F0_HOP)
+    print("    F0: librosa pyin（CPU）")
+    return np.asarray(f0, dtype=float), "pyin"
 
 
 def f0_windows(f0, window=WINDOW, hop_sec=F0_HOP / F0_RATE):
