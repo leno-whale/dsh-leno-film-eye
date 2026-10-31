@@ -37,6 +37,9 @@ RATE = 8000          # db 列与她一致用 8k；F0/模型各自用 16k
 F0_RATE = 16000
 F0_HOP = 160         # 10ms
 VOICED_CONF = 0.5
+# 判读最小可判样本。n=20 时 0/20 的 Wilson 95% 上界约 0.16（<0.2）、20/20 的下界约 0.84（>0.5），
+# 才够区分本题的两个判读区间；n<20 一律报 insufficient，不许出「盲区大/小」。
+MIN_DECIDED = 20
 ST_REF = 440.0       # 半音基准 A4
 
 # ---------------------------------------------------------------- 基础
@@ -246,9 +249,13 @@ def run_one(path, out_dir, do_emotion=True, f0_meter="pyin"):
         summ["p_undecidable"] = round(1 - len(decided) / len(events), 2)
         if decided:
             summ["p_with_sink"] = round(len(sinks) / len(decided), 2)
-            summ["read_exp1"] = ("盲区代价大（≥50%）" if summ["p_with_sink"] >= 0.5
-                                 else "实际盲区小（<20%）" if summ["p_with_sink"] < 0.2
-                                 else "灰区，只报数")
+            if len(decided) < MIN_DECIDED:
+                summ["read_exp1"] = (f"insufficient：可判仅 {len(decided)} 条"
+                                     f"（需 ≥{MIN_DECIDED}），p 不可采信")
+            else:
+                summ["read_exp1"] = ("盲区代价大（≥50%）" if summ["p_with_sink"] >= 0.5
+                                     else "实际盲区小（<20%）" if summ["p_with_sink"] < 0.2
+                                     else "灰区，只报数")
         else:
             summ["read_exp1"] = "insufficient：无一条可判（全部未定音或八度误判）"
     if emo and n > 2:
