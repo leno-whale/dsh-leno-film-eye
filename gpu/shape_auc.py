@@ -20,6 +20,9 @@ WINDOW = 4.0
 DROP_DB = -6.0        # 塌阈值，先写死，不许为 AUC 好看去动
 SINK_ST = -1.0        # 降 ≥1 半音算沉
 OCTAVE_ST = 12.0      # |Δ| > 12 视为八度误判
+# 与 run_f0_valence.py 的 MIN_DECIDED 同值同义：可判样本 <20 时 AUC 只是记录，
+# 不许当「盲区大小」讲——n=18 的 95% 区间宽度足以跨过 0.5。
+MIN_DECIDED = 20
 
 
 def auc(scores, labels):
@@ -111,6 +114,10 @@ def main():
 
     print("\n判读：CI 含 0.5 → 完全盲；显著 > 0.5 → 部分可恢复（上界即 AUC）。")
     print("注意：未按 L_0 分层；分层前的结果不得当结论（见提案 §四.2）。")
+
+    if len(dec) < MIN_DECIDED:
+        print(f"\ninsufficient：可判仅 {len(dec)} 条（需 ≥{MIN_DECIDED}）。"
+              f"上面三个 AUC 只作记录，不构成「可恢复/不可恢复」的结论。")
     return 0
 
 

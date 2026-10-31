@@ -1,0 +1,54 @@
+{
+  "window_s": 4.0,
+  "voiced_conf": 0.5,
+  "meters_note": "f0/db 列为她的口径；m_* 列 meter:external-model，不进 φ（E1）",
+  "files": [
+    {
+      "file": "31290560007-1-192.mp4",
+      "f0_meter": "pyin(events)",
+      "f0_scope": "events",
+      "emo_meter": "skipped",
+      "n_windows": 389,
+      "n_events": 4,
+      "n_decided": 2,
+      "n_undecidable": 2,
+      "p_undecidable": 0.5,
+      "p_with_sink": 1.0,
+      "read_exp1": "insufficient：可判仅 2 条（需 ≥20），p 不可采信"
+    },
+    {
+      "file": "31785420299-1-192.mp4",
+      "f0_meter": "pyin(events)",
+      "f0_scope": "events",
+      "emo_meter": "skipped",
+      "n_windows": 1849,
+      "n_events": 16,
+      "n_decided": 15,
+      "n_undecidable": 1,
+      "p_undecidable": 0.06,
+      "p_with_sink": 0.67,
+      "read_exp1": "insufficient：可判仅 15 条（需 ≥20），p 不可采信"
+    },
+    {
+      "file": "43155328889-1-192.mp4",
+      "f0_meter": "pyin(events)",
+      "f0_scope": "events",
+      "emo_meter": "skipped",
+      "n_windows": 1276,
+      "n_events": 2,
+      "n_decided": 1,
+      "n_undecidable": 1,
+      "p_undecidable": 0.5,
+      "p_with_sink": 1.0,
+      "read_exp1": "insufficient：可判仅 1 条（需 ≥20），p 不可采信"
+    },
+    {
+      "file": "央视访谈.mp4",
+      "f0_meter": "pyin(events)",
+      "f0_scope": "events",
+      "emo_meter": "skipped",
+      "n_windows": 269,
+      "n_events": 0
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 node_modules/
 .tmp-test/
+__pycache__/
 film-out/
 *.mp4
 *.mkv
