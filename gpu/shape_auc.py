@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 
 WINDOW = 4.0
-DROP_DB = -6.0        # 塌阈值，先写死，不许为 AUC 好看去动
+DROP_DB = -6.0        # 塌阈值默认 -6；-3 是独立口径，由 --drop-db 传入，结果不与 -6 合并
 SINK_ST = -1.0        # 降 ≥1 半音算沉
 OCTAVE_ST = 12.0      # |Δ| > 12 视为八度误判
 # 与 run_f0_valence.py 的 MIN_DECIDED 同值同义：可判样本 <20 时 AUC 只是记录，
@@ -50,7 +50,7 @@ def load_rows(path):
     return out
 
 
-def events_of(rows):
+def events_of(rows, drop_db=DROP_DB):
     """重建塌事件，返回 Φ 与 sink；不可判的 with_sink=None。"""
     ev = []
     for i in range(1, len(rows)):
@@ -59,7 +59,7 @@ def events_of(rows):
         if not db0 or not db1:
             continue
         drop = float(db1) - float(db0)
-        if drop > DROP_DB:
+        if drop > drop_db:
             continue
         f0a = rows[i - 1].get("f0_med_st", "")
         f0b = rows[i].get("f0_med_st", "")
@@ -81,6 +81,9 @@ def events_of(rows):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", type=Path, default=Path(__file__).parent / "out-2026-10-31")
+    ap.add_argument("--drop-db", type=float, default=DROP_DB,
+                    help="塌阈值（dB，环比），须与生成 window.tsv 的那次跑一致；"
+                         "-3 是独立口径，不与 -6 合并")
     args = ap.parse_args()
 
     files = sorted(args.out.glob("*.window.tsv"))
@@ -89,10 +92,11 @@ def main():
         return 1
 
     all_ev = []
+    print(f"塌阈值 {args.drop_db:g} dB（须与生成 window.tsv 的那次跑一致）")
     print(f"{'片':24s} {'窗':>4s} {'塌':>3s} {'可判':>4s} {'沉':>3s}")
     for f in files:
         rows = load_rows(f)
-        ev = events_of(rows)
+        ev = events_of(rows, args.drop_db)
         dec = [e for e in ev if e["decidable"]]
         sinks = [e for e in dec if e["sink"]]
         print(f"{f.name[:24]:24s} {len(rows):4d} {len(ev):3d} {len(dec):4d} {len(sinks):3d}")

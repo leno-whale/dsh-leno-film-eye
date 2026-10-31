@@ -17,6 +17,15 @@
 #   实验二：valence 窗间标准差 <0.05（模型原尺度）→ 此素材 valence 携带信息少，
 #           报 low-signal；否则给 top-10 valence 移动时刻（按 |Δv| 排）。
 #
+#   【独立口径 · 3 dB】2026-10-31 追加，作者已裁决「另开」。不是上一条的重分析，是另一条实验臂：
+#           塌事件 = 4s 窗 db 环比跌 ≥3 dB（--drop-db -3）。
+#           事件定义变了 ⇒ 3 dB 的结果与 6 dB **不可比、不可合并**：6 dB 事件必定也是 3 dB 事件，
+#           反之不然，两个事件总体不同，pooled p 也不许相加。
+#           判读规则**逐字沿用**（沉 = 降 ≥1 半音且方向 down；|Δst|>12 判无效；
+#           可判 <20 报 insufficient；≥50% / <20% / 中间灰区）——换阈值时改判读就是凑数。
+#           新增一条只对本口径的诚实记录：连续下坡会被切成多个相邻事件，它们**不独立**，
+#           故 summary 另报 n_runs（连续事件段数）；CI 按 run 算，不按事件算。
+#
 # 纪律：
 #   - db 列不是另造的尺子——与本 bundle parity/ 下她 node 实现的 align.tsv
 #     逐行对（同 4s 窗、同 20log10(RMS)、同 -90 钳制）；对不上 → parity FAIL，停。
@@ -24,7 +33,7 @@
 #   - 情绪模型拉不动不硬凑：实验一独立成立，实验二标 no-model。
 #
 # 用法：python3 run_f0_valence.py --media ../media --out ../out [--no-emotion]
-#       [--f0 pyin|crepe] [--f0-scope all|events]
+#       [--f0 pyin|crepe] [--f0-scope all|events] [--drop-db -6|-3]
 import argparse
 import json
 import subprocess
@@ -42,6 +51,7 @@ VOICED_CONF = 0.5
 # 才够区分本题的两个判读区间；n<20 一律报 insufficient，不许出「盲区大/小」。
 MIN_DECIDED = 20
 ST_REF = 440.0       # 半音基准 A4
+DROP_DB = -6.0       # 塌阈值默认 -6 dB；-3 是独立口径，结果单列，不与 -6 合并
 
 # ---------------------------------------------------------------- 基础
 
@@ -162,7 +172,7 @@ def ffmpeg_decode_segment(path, start, dur, rate=F0_RATE):
     return np.frombuffer(r.stdout, dtype=np.int16).astype(np.float32) / 32768.0
 
 
-def f0_windows_events(path, db, meter="pyin"):
+def f0_windows_events(path, db, meter="pyin", drop_db=DROP_DB):
     """两遍法：db 已经定位了塌事件，只扫事件窗口的 F0。
     每个塌窗与它前一窗拼成 8s，一次解码、一次 pyin——逐窗单跑会让 Viterbi
     在每个 4s 边界重置，Δst 直接失真；拼起来才保住上下文。
@@ -172,8 +182,9 @@ def f0_windows_events(path, db, meter="pyin"):
     import librosa
     per = int(round(WINDOW / (F0_HOP / F0_RATE)))
     stats = [NAN_STATS] * len(db)
-    idxs = [i for i in range(1, len(db)) if db[i] - db[i - 1] <= -6.0]
-    print(f"    两遍法：塌 {len(idxs)} 个 → 只算 {2 * len(idxs)} 个窗（整片 {len(db)} 窗）")
+    idxs = [i for i in range(1, len(db)) if db[i] - db[i - 1] <= drop_db]
+    print(f"    两遍法（塌阈值 {drop_db:g} dB）：塌 {len(idxs)} 个 → 只算 "
+          f"{2 * len(idxs)} 个窗（整片 {len(db)} 窗）")
     for j, i in enumerate(idxs, 1):
         audio = ffmpeg_decode_segment(path, (i - 1) * WINDOW, 2 * WINDOW)
         f, _, _ = librosa.pyin(audio, fmin=65, fmax=500, sr=F0_RATE, hop_length=F0_HOP)
@@ -231,7 +242,7 @@ def parity_check(db):
     return ok
 
 
-def run_one(path, out_dir, do_emotion=True, f0_meter="pyin", f0_scope="all"):
+def run_one(path, out_dir, do_emotion=True, f0_meter="pyin", f0_scope="all", drop_db=DROP_DB):
     print(f"  {path.name}")
     x8k = ffmpeg_decode(path, RATE)
     db = window_db(x8k, RATE, WINDOW)
@@ -241,7 +252,7 @@ def run_one(path, out_dir, do_emotion=True, f0_meter="pyin", f0_scope="all"):
 
     ts = np.arange(len(db)) * WINDOW
     if f0_scope == "events":
-        fw = f0_windows_events(path, db, f0_meter)
+        fw = f0_windows_events(path, db, f0_meter, drop_db)
         f0_src = f"{f0_meter}(events)"
     else:
         f0, f0_src = f0_track(path, f0_meter)
@@ -263,12 +274,17 @@ def run_one(path, out_dir, do_emotion=True, f0_meter="pyin", f0_scope="all"):
             "m_valence": round(va, 3) if va == va else None,
         })
 
-    # 事件表：塌 = db 一窗跌 ≥6；伴随沉 = 窗中位半音相对上一窗降 ≥1
+    # 事件表：塌 = db 一窗跌 ≥ drop_db（默认 6，3 dB 是独立口径）；伴随沉 = 窗中位半音相对上一窗降 ≥1
     # 方向必须为 down；|Δ|>12 视为八度误判 → 记 null（判不了）
     events = []
+    n_runs = 0
+    last_ev = -10
     for i in range(1, n):
         drop = db[i] - db[i - 1]
-        if drop <= -6:
+        if drop <= drop_db:
+            if i != last_ev + 1:      # 连续下坡被切成多个事件，只算一段；它们不独立
+                n_runs += 1
+            last_ev = i
             dst = (fw[i][0] - fw[i - 1][0]) if (fw[i][0] == fw[i][0] and fw[i - 1][0] == fw[i - 1][0]) else float("nan")
             decidable = dst == dst and abs(dst) <= 12
             events.append({
@@ -281,8 +297,9 @@ def run_one(path, out_dir, do_emotion=True, f0_meter="pyin", f0_scope="all"):
 
     # 汇总 + sanity 门 + 判读
     summ = {"file": path.name, "f0_meter": f0_src, "f0_scope": f0_scope, "emo_meter": emo_src,
-            "n_windows": n, "n_events": len(events)}
+            "drop_db": drop_db, "n_windows": n, "n_events": len(events)}
     if events:
+        summ["n_runs"] = n_runs
         decided = [e for e in events if e["with_sink"] is not None]
         sinks = [e for e in decided if e["with_sink"]]
         summ["n_decided"] = len(decided)
@@ -333,6 +350,9 @@ def main():
     ap.add_argument("--f0-scope", choices=("all", "events"), default="all",
                     help="all：整片逐窗算 F0（默认）；events：两遍法，只用 db 定位塌事件、"
                          "只对事件邻窗算 F0（仅 pyin，长片用，判读口径不变）")
+    ap.add_argument("--drop-db", type=float, default=DROP_DB,
+                    help="塌阈值（dB，环比）。默认 -6。**-3 是独立实验臂**：结果单列、"
+                         "不与 -6 合并，判读规则不变")
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
@@ -340,15 +360,17 @@ def main():
                    if p.suffix.lower() in {".mp4", ".mkv", ".webm", ".flv", ".m4a", ".mp3", ".wav"})
     if not files:
         sys.exit(f"media 目录里没有媒体文件：{args.media}")
-    print(f"素材 {len(files)} 支｜窗口 {WINDOW}s｜F0 范围 {args.f0_scope}｜判读已先写死（见文件头）")
+    print(f"素材 {len(files)} 支｜窗口 {WINDOW}s｜塌阈值 {args.drop_db:g} dB｜"
+          f"F0 范围 {args.f0_scope}｜判读已先写死（见文件头）")
 
     summaries = []
     for p in files:
         summaries.append(run_one(p, args.out, do_emotion=not args.no_emotion,
-                                 f0_meter=args.f0, f0_scope=args.f0_scope))
+                                 f0_meter=args.f0, f0_scope=args.f0_scope,
+                                 drop_db=args.drop_db))
 
     (args.out / "summary.json").write_text(
-        json.dumps({"window_s": WINDOW, "voiced_conf": VOICED_CONF,
+        json.dumps({"window_s": WINDOW, "drop_db": args.drop_db, "voiced_conf": VOICED_CONF,
                     "meters_note": "f0/db 列为她的口径；m_* 列 meter:external-model，不进 φ（E1）",
                     "files": summaries}, ensure_ascii=False, indent=2),
         encoding="utf-8")
