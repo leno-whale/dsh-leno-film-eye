@@ -1,0 +1,19 @@
+{
+  "window_s": 4.0,
+  "voiced_conf": 0.5,
+  "meters_note": "f0/db 列为她的口径；m_* 列 meter:external-model，不进 φ（E1）",
+  "files": [
+    {
+      "file": "31290560007-1-192.mp4",
+      "f0_meter": "pyin",
+      "emo_meter": "no-model",
+      "n_windows": 389,
+      "n_events": 4,
+      "n_decided": 2,
+      "n_undecidable": 2,
+      "p_undecidable": 0.5,
+      "p_with_sink": 1.0,
+      "read_exp1": "盲区代价大（≥50%）"
+    }
+  ]
+}
