@@ -1,0 +1,22 @@
+素材 6 支｜窗口 4.0s｜判读已先写死（见文件头）
+  28871298443-1-192.mp4
+    [parity] 对了 54 行，最大差 0.00 dB → PASS
+    F0: torchcrepe-full on cuda (batch 128)
+    [warn] 情绪模型不可用（ModuleNotFoundError: No module named 'essentia'），实验二标 no-model
+  42911989885-1-192.mp4
+    F0: torchcrepe-full on cuda (batch 128)
+    [warn] 情绪模型不可用（ModuleNotFoundError: No module named 'essentia'），实验二标 no-model
+  42980740098-1-192.mp4
+    F0: torchcrepe-full on cuda (batch 128)
+    [warn] 情绪模型不可用（ModuleNotFoundError: No module named 'essentia'），实验二标 no-model
+  43068556628-1-192.mp4
+    F0: torchcrepe-full on cuda (batch 128)
+    [warn] 情绪模型不可用（ModuleNotFoundError: No module named 'essentia'），实验二标 no-model
+  43115939271-1-192.mp4
+    F0: torchcrepe-full on cuda (batch 128)
+    [warn] 情绪模型不可用（ModuleNotFoundError: No module named 'essentia'），实验二标 no-model
+  467586220_da2-1-192.mp4
+    F0: torchcrepe-full on cuda (batch 128)
+    [warn] 情绪模型不可用（ModuleNotFoundError: No module named 'essentia'），实验二标 no-model
+
+完成 → ../out/summary.json
