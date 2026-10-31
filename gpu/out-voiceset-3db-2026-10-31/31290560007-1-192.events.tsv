@@ -1,0 +1,274 @@
+[
+ {
+  "t": 52.0,
+  "drop_db": -5.3,
+  "prev_db": -28.0,
+  "f0_delta_st": -4.2,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 128.0,
+  "drop_db": -4.7,
+  "prev_db": -23.3,
+  "f0_delta_st": -1.4,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 180.0,
+  "drop_db": -3.8,
+  "prev_db": -26.8,
+  "f0_delta_st": -1.6,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 208.0,
+  "drop_db": -6.5,
+  "prev_db": -26.8,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 308.0,
+  "drop_db": -5.9,
+  "prev_db": -30.2,
+  "f0_delta_st": -11.4,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 356.0,
+  "drop_db": -4.5,
+  "prev_db": -28.3,
+  "f0_delta_st": -9.3,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 388.0,
+  "drop_db": -3.7,
+  "prev_db": -28.9,
+  "f0_delta_st": -6.2,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 424.0,
+  "drop_db": -16.6,
+  "prev_db": -28.7,
+  "f0_delta_st": -7.0,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 432.0,
+  "drop_db": -4.0,
+  "prev_db": -44.2,
+  "f0_delta_st": -0.1,
+  "with_sink": false,
+  "f0_dir": "down"
+ },
+ {
+  "t": 500.0,
+  "drop_db": -3.8,
+  "prev_db": -28.0,
+  "f0_delta_st": -1.0,
+  "with_sink": false,
+  "f0_dir": "down"
+ },
+ {
+  "t": 520.0,
+  "drop_db": -3.3,
+  "prev_db": -27.2,
+  "f0_delta_st": -1.2,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 612.0,
+  "drop_db": -3.5,
+  "prev_db": -28.7,
+  "f0_delta_st": -2.8,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 644.0,
+  "drop_db": -3.2,
+  "prev_db": -26.5,
+  "f0_delta_st": -0.6,
+  "with_sink": false,
+  "f0_dir": "down"
+ },
+ {
+  "t": 664.0,
+  "drop_db": -4.8,
+  "prev_db": -27.8,
+  "f0_delta_st": 3.85,
+  "with_sink": false,
+  "f0_dir": "up"
+ },
+ {
+  "t": 692.0,
+  "drop_db": -3.4,
+  "prev_db": -27.0,
+  "f0_delta_st": -3.05,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 776.0,
+  "drop_db": -4.0,
+  "prev_db": -27.0,
+  "f0_delta_st": -2.7,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 928.0,
+  "drop_db": -3.4,
+  "prev_db": -24.6,
+  "f0_delta_st": -2.55,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 988.0,
+  "drop_db": -3.2,
+  "prev_db": -25.8,
+  "f0_delta_st": -0.5,
+  "with_sink": false,
+  "f0_dir": "down"
+ },
+ {
+  "t": 992.0,
+  "drop_db": -5.4,
+  "prev_db": -29.0,
+  "f0_delta_st": 1.2,
+  "with_sink": false,
+  "f0_dir": "up"
+ },
+ {
+  "t": 1028.0,
+  "drop_db": -7.6,
+  "prev_db": -28.7,
+  "f0_delta_st": -10.5,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 1032.0,
+  "drop_db": -3.1,
+  "prev_db": -36.3,
+  "f0_delta_st": 0.2,
+  "with_sink": false,
+  "f0_dir": "up"
+ },
+ {
+  "t": 1044.0,
+  "drop_db": -5.6,
+  "prev_db": -30.8,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 1060.0,
+  "drop_db": -3.7,
+  "prev_db": -24.7,
+  "f0_delta_st": -0.3,
+  "with_sink": false,
+  "f0_dir": "down"
+ },
+ {
+  "t": 1076.0,
+  "drop_db": -4.9,
+  "prev_db": -30.1,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 1088.0,
+  "drop_db": -5.0,
+  "prev_db": -26.4,
+  "f0_delta_st": -5.8,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 1128.0,
+  "drop_db": -7.1,
+  "prev_db": -31.2,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 1228.0,
+  "drop_db": -3.4,
+  "prev_db": -27.4,
+  "f0_delta_st": -0.7,
+  "with_sink": false,
+  "f0_dir": "down"
+ },
+ {
+  "t": 1256.0,
+  "drop_db": -5.0,
+  "prev_db": -28.0,
+  "f0_delta_st": 6.0,
+  "with_sink": false,
+  "f0_dir": "up"
+ },
+ {
+  "t": 1356.0,
+  "drop_db": -3.4,
+  "prev_db": -30.0,
+  "f0_delta_st": -1.2,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 1376.0,
+  "drop_db": -4.2,
+  "prev_db": -27.8,
+  "f0_delta_st": -1.6,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 1440.0,
+  "drop_db": -4.6,
+  "prev_db": -29.2,
+  "f0_delta_st": -1.2,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 1540.0,
+  "drop_db": -4.0,
+  "prev_db": -26.7,
+  "f0_delta_st": -0.75,
+  "with_sink": false,
+  "f0_dir": "down"
+ },
+ {
+  "t": 1544.0,
+  "drop_db": -3.0,
+  "prev_db": -30.7,
+  "f0_delta_st": -6.5,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 1548.0,
+  "drop_db": -5.9,
+  "prev_db": -33.7,
+  "f0_delta_st": -1.9,
+  "with_sink": true,
+  "f0_dir": "down"
+ }
+]

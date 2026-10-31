@@ -1,0 +1,50 @@
+[
+ {
+  "t": 48.0,
+  "drop_db": -11.2,
+  "prev_db": -21.2,
+  "f0_delta_st": 9.7,
+  "with_sink": false,
+  "f0_dir": "up"
+ },
+ {
+  "t": 116.0,
+  "drop_db": -7.6,
+  "prev_db": -18.2,
+  "f0_delta_st": -9.1,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 132.0,
+  "drop_db": -10.8,
+  "prev_db": -18.0,
+  "f0_delta_st": -11.9,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 228.0,
+  "drop_db": -8.3,
+  "prev_db": -24.2,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 236.0,
+  "drop_db": -7.3,
+  "prev_db": -28.1,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 244.0,
+  "drop_db": -11.5,
+  "prev_db": -20.1,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ }
+]

@@ -1,0 +1,12 @@
+素材 1 支｜窗口 4.0s｜判读已先写死（见文件头）
+  31290560007-1-192.mp4
+    pyin    300 / 1560 s
+    pyin    600 / 1560 s
+    pyin    900 / 1560 s
+    pyin   1200 / 1560 s
+    pyin   1500 / 1560 s
+    pyin   1560 / 1560 s
+    F0: librosa pyin（CPU，fmin 65 / fmax 500，6 块）
+    [warn] 情绪模型不可用（ModuleNotFoundError: No module named 'essentia'），实验二标 no-model
+
+完成 → ../out-interview/summary.json

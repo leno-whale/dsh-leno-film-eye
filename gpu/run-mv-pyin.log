@@ -1,0 +1,23 @@
+﻿素材 6 支｜窗口 4.0s｜塌阈值 -6 dB｜F0 范围 all｜判读已先写死（见文件头）
+  28871298443-1-192.mp4
+    [parity] 对了 54 行，最大差 0.00 dB → PASS
+    pyin    217 / 217 s
+    F0: librosa pyin（CPU，fmin 65 / fmax 500，1 块）
+  42911989885-1-192.mp4
+    pyin    218 / 218 s
+    F0: librosa pyin（CPU，fmin 65 / fmax 500，1 块）
+  42980740098-1-192.mp4
+    pyin    149 / 149 s
+    F0: librosa pyin（CPU，fmin 65 / fmax 500，1 块）
+  43068556628-1-192.mp4
+    pyin    265 / 265 s
+    F0: librosa pyin（CPU，fmin 65 / fmax 500，1 块）
+  43115939271-1-192.mp4
+    pyin    188 / 188 s
+    F0: librosa pyin（CPU，fmin 65 / fmax 500，1 块）
+  467586220_da2-1-192.mp4
+    pyin    300 / 406 s
+    pyin    406 / 406 s
+    F0: librosa pyin（CPU，fmin 65 / fmax 500，2 块）
+
+完成 → f:\agent-trae\dsh-leno-film-eye\gpu\out-mv-pyin-2026-10-31/summary.json

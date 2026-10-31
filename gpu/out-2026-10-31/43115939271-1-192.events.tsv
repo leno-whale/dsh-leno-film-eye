@@ -1,0 +1,23 @@
+[
+ {
+  "t": 4.0,
+  "drop_db": -7.0,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 12.0,
+  "drop_db": -10.4,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ },
+ {
+  "t": 72.0,
+  "drop_db": -9.5,
+  "f0_delta_st": null,
+  "with_sink": null,
+  "f0_dir": null
+ }
+]

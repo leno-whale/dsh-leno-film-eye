@@ -1,0 +1,61 @@
+{
+  "window_s": 4.0,
+  "voiced_conf": 0.5,
+  "meters_note": "f0/db 列为她的口径；m_* 列 meter:external-model，不进 φ（E1）",
+  "files": [
+    {
+      "file": "28871298443-1-192.mp4",
+      "f0_meter": "torchcrepe-full",
+      "emo_meter": "no-model",
+      "n_windows": 54,
+      "n_events": 3,
+      "p_with_sink": 0.33,
+      "read_exp1": "灰区，只报数"
+    },
+    {
+      "file": "42911989885-1-192.mp4",
+      "f0_meter": "torchcrepe-full",
+      "emo_meter": "no-model",
+      "n_windows": 54,
+      "n_events": 1,
+      "p_with_sink": 0.0,
+      "read_exp1": "实际盲区小（<20%）"
+    },
+    {
+      "file": "42980740098-1-192.mp4",
+      "f0_meter": "torchcrepe-full",
+      "emo_meter": "no-model",
+      "n_windows": 37,
+      "n_events": 3,
+      "p_with_sink": 0.0,
+      "read_exp1": "实际盲区小（<20%）"
+    },
+    {
+      "file": "43068556628-1-192.mp4",
+      "f0_meter": "torchcrepe-full",
+      "emo_meter": "no-model",
+      "n_windows": 66,
+      "n_events": 6,
+      "p_with_sink": 0.0,
+      "read_exp1": "实际盲区小（<20%）"
+    },
+    {
+      "file": "43115939271-1-192.mp4",
+      "f0_meter": "torchcrepe-full",
+      "emo_meter": "no-model",
+      "n_windows": 47,
+      "n_events": 3,
+      "p_with_sink": 0.0,
+      "read_exp1": "实际盲区小（<20%）"
+    },
+    {
+      "file": "467586220_da2-1-192.mp4",
+      "f0_meter": "torchcrepe-full",
+      "emo_meter": "no-model",
+      "n_windows": 101,
+      "n_events": 4,
+      "p_with_sink": 0.0,
+      "read_exp1": "实际盲区小（<20%）"
+    }
+  ]
+}
