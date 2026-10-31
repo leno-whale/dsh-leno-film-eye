@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# 素材预检：在跑正式实验之前，先算每支片的定音率，不够就不跑。
+# 素材预检：在跑正式实验之前，先算定音率，不够就不跑。
 #
 # 为什么要有这一步：2026-10-31 那次 6 支片定音率只有 0.22，跑完才发现
 # 20 个塌事件一条都判不了。同样的时间可以在开跑前 30 秒内知道。
+#
+# 抽样方式（v2，为长片改）：
+#   只取开头会误判 —— 访谈/纪录片开头常有片头音乐。改为全片等间隔取 SEG_N 段，
+#   每段 SEG_SEC 秒，避开首尾 5%，报「均值 / 最低段」。
+#   判读看均值，但最低段 < 0.2 要单独说明（说明片里有一段几乎无人声）。
 #
 # 门槛（写死，不许看完结果再改）：
 #   voiced_mean ≥ 0.60 → 可以跑
@@ -11,7 +16,6 @@
 #   < 0.40             → 不跑，换素材
 #
 # 口径与 run_f0_valence.py 完全一致：16kHz、hop 160(10ms)、torchcrepe full、conf>0.5。
-# 只取前 PRE_SEC 秒（默认 90），足够估比例，不必整片解码。
 #
 # 用法：python3 precheck.py --media ../media [--device cpu]
 import argparse
@@ -21,7 +25,8 @@ from pathlib import Path
 
 import numpy as np
 
-PRE_SEC = 90
+SEG_N = 4
+SEG_SEC = 30
 RATE = 16000
 HOP = 160
 VOICED_CONF = 0.5
@@ -29,11 +34,35 @@ GATE_OK = 0.60
 GATE_EDGE = 0.40
 
 
-def decode(path, sec):
+def duration(path):
     r = subprocess.run(
-        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(path),
-         "-t", str(sec), "-vn", "-ac", "1", "-ar", str(RATE), "-f", "s16le", "-"],
-        capture_output=True)
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "csv=p=0", str(path)], capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except (ValueError, AttributeError):
+        return None
+
+
+def segments(dur):
+    """全片等间隔取 SEG_N 段，避开首尾 5%；短片则退化为整片。"""
+    if not dur or dur <= 0:
+        return [(0.0, SEG_SEC * SEG_N)]
+    lo, hi = dur * 0.05, dur * 0.95
+    if hi - lo <= SEG_SEC:
+        return [(lo, max(1.0, hi - lo))]
+    if hi - lo < SEG_SEC * SEG_N:
+        step = (hi - lo - SEG_SEC) / max(1, SEG_N - 1)
+        return [(lo + i * step, SEG_SEC) for i in range(SEG_N)]
+    step = (hi - lo - SEG_SEC) / (SEG_N - 1)
+    return [(lo + i * step, SEG_SEC) for i in range(SEG_N)]
+
+
+def decode(path, start, sec):
+    r = subprocess.run(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-ss", str(start),
+         "-t", str(sec), "-i", str(path), "-vn", "-ac", "1", "-ar", str(RATE),
+         "-f", "s16le", "-"], capture_output=True)
     if r.returncode != 0 or not r.stdout:
         return None
     return np.frombuffer(r.stdout, dtype=np.int16).astype(np.float32) / 32768.0
@@ -61,25 +90,29 @@ def main():
         print(f"没有可读素材：{args.media}", file=sys.stderr)
         return 1
 
-    print(f"{'文件':34s} {'前90s定音率':>10s}  判读")
-    results = []
     for p in files:
-        x = decode(p, PRE_SEC)
-        if x is None or x.size == 0:
-            print(f"{p.name[:34]:34s} {'—':>10s}  无音轨/解码失败")
+        dur = duration(p)
+        segs = segments(dur)
+        print(f"\n{p.name}  时长 {'%.1f min' % (dur / 60) if dur else '未知'}"
+              f"  抽样 {len(segs)} 段 × {SEG_SEC}s")
+        vals = []
+        for start, sec in segs:
+            x = decode(p, start, sec)
+            if x is None or x.size == 0:
+                print(f"  @{start:6.0f}s  解码失败")
+                continue
+            v = voiced_ratio(x, args.device)
+            vals.append(v)
+            print(f"  @{start:6.0f}s  voiced={v:.2f}")
+        if not vals:
+            print("  无有效段")
             continue
-        v = voiced_ratio(x, args.device)
-        verdict = ("可跑" if v >= GATE_OK
-                   else "边缘（只作探索）" if v >= GATE_EDGE
+        mean, lo = float(np.mean(vals)), float(np.min(vals))
+        verdict = ("可跑" if mean >= GATE_OK
+                   else "边缘（只作探索）" if mean >= GATE_EDGE
                    else "不跑，换素材")
-        results.append((p.name, v))
-        print(f"{p.name[:34]:34s} {v:10.2f}  {verdict}")
-
-    if results:
-        ok = [r for r in results if r[1] >= GATE_OK]
-        print(f"\n达标 {len(ok)}/{len(results)}（门槛 {GATE_OK}）")
-        if not ok:
-            print("没有一支过门槛 —— 别跑正式实验，换素材。")
+        print(f"  → 均值 {mean:.2f} / 最低 {lo:.2f}  【{verdict}】"
+              + ("  ⚠ 有一段几乎无人声" if lo < 0.2 else ""))
     return 0
 
 
