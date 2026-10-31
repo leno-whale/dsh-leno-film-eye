@@ -1,0 +1,34 @@
+[
+ {
+  "t": 148.0,
+  "drop_db": -3.0,
+  "prev_db": -16.4,
+  "f0_delta_st": 8.0,
+  "with_sink": false,
+  "f0_dir": "up"
+ },
+ {
+  "t": 164.0,
+  "drop_db": -3.5,
+  "prev_db": -14.2,
+  "f0_delta_st": -11.6,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 364.0,
+  "drop_db": -4.7,
+  "prev_db": -16.5,
+  "f0_delta_st": -9.5,
+  "with_sink": true,
+  "f0_dir": "down"
+ },
+ {
+  "t": 872.0,
+  "drop_db": -4.2,
+  "prev_db": -13.7,
+  "f0_delta_st": -9.15,
+  "with_sink": true,
+  "f0_dir": "down"
+ }
+]
