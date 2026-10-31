@@ -77,8 +77,23 @@ def f0_track(path, meter="pyin"):
     if meter == "pyin":
         import librosa
         audio = ffmpeg_decode(path, F0_RATE)
-        f0, _, _ = librosa.pyin(audio, fmin=65, fmax=500, sr=F0_RATE, hop_length=F0_HOP)
-        print("    F0: librosa pyin（CPU，fmin 65 / fmax 500）")
+        # 分块跑：pyin 是逐帧 Viterbi，整片一次性算又慢又全程静默，容易被当成卡死
+        # 而中断终端（2026-10-31 已因此丢过一次 26 分钟片）。每块 CHUNK_SEC 秒，
+        # 块长对齐到 hop，拼接后帧不偏。代价：块边界处 Viterbi 重置，边界几十毫秒不可靠。
+        CHUNK_SEC = 300
+        step = int(CHUNK_SEC * F0_RATE / F0_HOP) * F0_HOP
+        total = len(audio)
+        parts = []
+        for i in range(0, total, step):
+            seg = audio[i:i + step]
+            if len(seg) < F0_HOP * 8:
+                break
+            f, _, _ = librosa.pyin(seg, fmin=65, fmax=500, sr=F0_RATE, hop_length=F0_HOP)
+            parts.append(f)
+            print(f"    pyin {min(i + step, total) / F0_RATE:6.0f} / {total / F0_RATE:.0f} s",
+                  flush=True)
+        f0 = np.concatenate(parts) if parts else np.array([], dtype=float)
+        print(f"    F0: librosa pyin（CPU，fmin 65 / fmax 500，{len(parts)} 块）")
         return np.asarray(f0, dtype=float), "pyin"
 
     try:
