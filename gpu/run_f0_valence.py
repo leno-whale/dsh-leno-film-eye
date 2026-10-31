@@ -128,7 +128,9 @@ def emotion_track(path):
         import essentia.standard as es
         audio = es.MonoLoader(filename=str(path), sampleRate=16000)()
         embedding = es.TensorflowPredictMusiCNN(graphFilename=EMO_MODEL)(audio)
-        # arousalvalence 模型输出 (N,2)，10ms 窗帧级
+        if embedding.ndim != 2 or embedding.shape[1] != 2:
+            # 下错模型（如 autotagging 是 (N,50) 标签概率）——拒用，不静默出脏数
+            raise ValueError(f"模型输出 {embedding.shape}，不是 (N,2) 的 v/a 回归")
         frames_per_4s = int(4.0 / 0.05)   # 该模型输出 20fps
         m = len(embedding) // frames_per_4s
         out = [(float(embedding[i * frames_per_4s:(i + 1) * frames_per_4s, 0].mean()),
