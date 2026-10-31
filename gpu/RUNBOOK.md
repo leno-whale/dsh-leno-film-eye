@@ -35,14 +35,30 @@ curl -L -o models/arousalvalence-msd-musicnn-1.pb \
 ls -la models/    # 有文件且 >1MB 才算数
 ```
 
-## 3. 跑
+## 3. 预检 + 跑
+
+先预检（几十秒到几分钟；不看这行不许开跑）：
 
 ```bash
 cd ~/film-eye-gpu/gpu
-python3 run_f0_valence.py --media ../media --out ../out
-# 只跑 F0（情绪模型彻底拉不动时）：
-# python3 run_f0_valence.py --media ../media --out ../out --no-emotion
+python3 precheck.py --media ../media
 ```
+
+- `voiced_mean < 0.60` → 不跑，换素材
+- `塌 0 个`，或合计塌事件 `<< 40` → 单支出不了 20 条可判，合并或换片
+
+再跑：
+
+```bash
+cd ~/film-eye-gpu/gpu
+# 长片（2–3 小时访谈）：两遍法，只对塌事件邻窗算 F0。判读口径不变，只是少算
+python3 run_f0_valence.py --media ../media --out ../out --f0 pyin --f0-scope events --no-emotion
+# 短片或要留全窗 F0 轨迹：默认整片逐窗
+python3 run_f0_valence.py --media ../media --out ../out
+```
+
+**第一次用 `--f0-scope events` 时**，先在同一支片上再跑一遍不带该参数的版本，把两份
+`window.tsv` 在事件窗上逐行比一次；对不上就停，别用两遍法的数。
 
 **第一支是《红泪石戒指》时注意看 `[parity]` 行：必须 PASS。FAIL 说明尺子对不上，立即停，把输出发回来。**
 

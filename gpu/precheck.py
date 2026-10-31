@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # 素材预检：在跑正式实验之前，先算定音率，不够就不跑。
+# 同时报「塌事件密度」——只看 db、不跑 F0，几十秒就能知道这支片子到底出不出样本。
+# 2–3 小时的访谈整片跑 pyin 要几小时，先看这一行再决定，别拿几小时换一句 insufficient。
 #
 # 为什么要有这一步：2026-10-31 那次 6 支片定音率只有 0.22，跑完才发现
 # 20 个塌事件一条都判不了。同样的时间可以在开跑前 30 秒内知道。
@@ -35,6 +37,16 @@ HOP = 160
 VOICED_CONF = 0.5
 GATE_OK = 0.60
 GATE_EDGE = 0.40
+
+# 塌事件密度（只算 db，不跑 F0）。口径与 run_f0_valence.py 完全一致：
+# 4s 满窗、8k 单声道、20log10(rms)、静音钳 -90、环比跌 ≥6 dB。
+# 为什么要这一步：2–3 小时的片子整片跑 pyin 要几小时，而塌事件多不多只看 db 就知道。
+WINDOW = 4.0
+DB_RATE = 8000
+DROP_DB = -6.0
+# 样本规划门槛：单支要独立撑起主实验的 MIN_DECIDED=20，约需 40 个塌事件
+# （2026-10-31 访谈实测可判率 2/4 = 0.5）。不到就别指望单支出结论，要么合并、要么换片。
+NEED_EVENTS = 40
 
 
 def duration(path):
@@ -78,6 +90,41 @@ def voiced_ratio(x, device=None):
     return float(np.mean(vflag))
 
 
+def db_windows(path):
+    """流式解码 8k 单声道，按 4s 满窗算 20log10(rms)，静音钳 -90（与主实验同式）。
+    流式是为了 2–3 小时的片子不把整段音频读进内存。"""
+    proc = subprocess.Popen(
+        ["ffmpeg", "-v", "error", "-i", str(path), "-vn", "-ac", "1",
+         "-ar", str(DB_RATE), "-f", "s16le", "-"],
+        stdout=subprocess.PIPE)
+    n = int(WINDOW * DB_RATE)
+    buf = np.empty(0, dtype=np.float32)
+    out = []
+    while True:
+        chunk = proc.stdout.read(n * 2 * 60)      # 约 60 个窗一读
+        if not chunk:
+            break
+        x = np.frombuffer(chunk, dtype=np.int16).astype(np.float32) / 32768.0
+        buf = np.concatenate([buf, x])
+        m = len(buf) // n
+        if m:
+            seg = buf[:m * n].reshape(m, n)
+            rms = np.sqrt((seg ** 2).mean(axis=1))
+            db = 20 * np.log10(np.maximum(rms, 1e-9))
+            out.extend(np.round(np.maximum(db, -90.0), 1).tolist())
+            buf = buf[m * n:]
+    proc.stdout.close()
+    proc.wait()
+    return np.array(out, dtype=float)
+
+
+def count_drops(db):
+    """塌事件数：环比跌 ≥6 dB 的窗数（与 run_f0_valence.py 判定同口径）。"""
+    if len(db) < 2:
+        return 0
+    return int(np.sum(np.diff(db) <= DROP_DB))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--media", required=True, type=Path)
@@ -90,6 +137,7 @@ def main():
         print(f"没有可读素材：{args.media}", file=sys.stderr)
         return 1
 
+    total_events = 0
     for p in files:
         dur = duration(p)
         segs = segments(dur)
@@ -113,6 +161,21 @@ def main():
                    else "不跑，换素材")
         print(f"  → 均值 {mean:.2f} / 最低 {lo:.2f}  【{verdict}】"
               + ("  ⚠ 有一段几乎无人声" if lo < 0.2 else ""))
+
+        # 塌事件密度：不跑 F0，纯 db，几十秒出结果
+        db = db_windows(p)
+        k = count_drops(db)
+        total_events += k
+        if k:
+            print(f"  → 4s 窗 {len(db)}，塌 {k} 个，密度 {dur / k:.0f} s/事件，"
+                  f"按可判率 0.5 预估可判 {k // 2} 条"
+                  + ("（单支达标）" if k >= NEED_EVENTS else f"（<{NEED_EVENTS}，需合并或换片）"))
+        else:
+            print(f"  → 4s 窗 {len(db)}，塌 0 个 —— 没有可判样本，换片")
+
+    print(f"\n合计塌事件 {total_events}"
+          f"（主实验要 {NEED_EVENTS} 个才够 {NEED_EVENTS // 2} 条可判；"
+          f"注意合并多片只能给 pooled p，不给跨片分布）")
     return 0
 
 

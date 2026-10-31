@@ -24,6 +24,7 @@
 #   - 情绪模型拉不动不硬凑：实验一独立成立，实验二标 no-model。
 #
 # 用法：python3 run_f0_valence.py --media ../media --out ../out [--no-emotion]
+#       [--f0 pyin|crepe] [--f0-scope all|events]
 import argparse
 import json
 import subprocess
@@ -130,23 +131,59 @@ def f0_track(path, meter="pyin"):
     return np.asarray(f0, dtype=float), "pyin"
 
 
+NAN_STATS = (float("nan"),) * 4
+
+
+def window_stats(seg):
+    """单个 4s 窗的 (中位半音, 四分位距, 斜率, voiced 占比)；定音帧不足 10% 给 NaN。"""
+    per = int(round(WINDOW / (F0_HOP / F0_RATE)))
+    v = seg[~np.isnan(seg)]
+    if len(v) < per * 0.1:
+        return NAN_STATS
+    st = semitone(v)
+    slope = float(np.polyfit(np.arange(len(st)) * (F0_HOP / F0_RATE), st, 1)[0]) if len(st) > 2 else float("nan")
+    return (float(np.median(st)),
+            float(np.percentile(st, 75) - np.percentile(st, 25)),
+            slope, len(v) / per)
+
+
 def f0_windows(f0, window=WINDOW, hop_sec=F0_HOP / F0_RATE):
     """每 4s 窗聚合：中位半音、四分位距、斜率（半音/秒）、voiced 占比。"""
     per = int(round(window / hop_sec))
     m = len(f0) // per
-    rows = []
-    for i in range(m):
-        seg = f0[i * per:(i + 1) * per]
-        v = seg[~np.isnan(seg)]
-        if len(v) >= per * 0.1:
-            st = semitone(v)
-            slope = float(np.polyfit(np.arange(len(st)) * hop_sec, st, 1)[0]) if len(st) > 2 else float("nan")
-            rows.append((float(np.median(st)),
-                         float(np.percentile(st, 75) - np.percentile(st, 25)),
-                         slope, len(v) / per))
-        else:
-            rows.append((float("nan"),) * 4)
-    return rows
+    return [window_stats(f0[i * per:(i + 1) * per]) for i in range(m)]
+
+
+def ffmpeg_decode_segment(path, start, dur, rate=F0_RATE):
+    r = subprocess.run(
+        ["ffmpeg", "-v", "error", "-ss", f"{start:.3f}", "-t", f"{dur:.3f}",
+         "-i", str(path), "-vn", "-ac", "1", "-ar", str(rate), "-f", "s16le", "-"],
+        capture_output=True, check=True)
+    return np.frombuffer(r.stdout, dtype=np.int16).astype(np.float32) / 32768.0
+
+
+def f0_windows_events(path, db, meter="pyin"):
+    """两遍法：db 已经定位了塌事件，只扫事件窗口的 F0。
+    每个塌窗与它前一窗拼成 8s，一次解码、一次 pyin——逐窗单跑会让 Viterbi
+    在每个 4s 边界重置，Δst 直接失真；拼起来才保住上下文。
+    返回与 db 等长的 stats 列表，没扫到的窗全 NaN（判定时自然落进「不可判」）。"""
+    if meter != "pyin":
+        sys.exit("--f0-scope events 只支持 pyin：crepe 走 GPU，整片本来就快，没有两遍法的意义")
+    import librosa
+    per = int(round(WINDOW / (F0_HOP / F0_RATE)))
+    stats = [NAN_STATS] * len(db)
+    idxs = [i for i in range(1, len(db)) if db[i] - db[i - 1] <= -6.0]
+    print(f"    两遍法：塌 {len(idxs)} 个 → 只算 {2 * len(idxs)} 个窗（整片 {len(db)} 窗）")
+    for j, i in enumerate(idxs, 1):
+        audio = ffmpeg_decode_segment(path, (i - 1) * WINDOW, 2 * WINDOW)
+        f, _, _ = librosa.pyin(audio, fmin=65, fmax=500, sr=F0_RATE, hop_length=F0_HOP)
+        f = np.asarray(f, dtype=float)
+        if len(f) < 2 * per:                      # 尾巴补 NaN，不拿短片段冒充满窗
+            f = np.concatenate([f, np.full(2 * per - len(f), np.nan)])
+        stats[i - 1] = window_stats(f[:per])
+        stats[i] = window_stats(f[per:2 * per])
+        print(f"    pyin {j}/{len(idxs)}（t={i * WINDOW:.0f}s）", flush=True)
+    return stats
 
 # ---------------------------------------------------------------- 实验二：情绪模型
 
@@ -194,7 +231,7 @@ def parity_check(db):
     return ok
 
 
-def run_one(path, out_dir, do_emotion=True, f0_meter="pyin"):
+def run_one(path, out_dir, do_emotion=True, f0_meter="pyin", f0_scope="all"):
     print(f"  {path.name}")
     x8k = ffmpeg_decode(path, RATE)
     db = window_db(x8k, RATE, WINDOW)
@@ -203,8 +240,12 @@ def run_one(path, out_dir, do_emotion=True, f0_meter="pyin"):
             sys.exit(1)
 
     ts = np.arange(len(db)) * WINDOW
-    f0, f0_src = f0_track(path, f0_meter)
-    fw = f0_windows(f0)
+    if f0_scope == "events":
+        fw = f0_windows_events(path, db, f0_meter)
+        f0_src = f"{f0_meter}(events)"
+    else:
+        f0, f0_src = f0_track(path, f0_meter)
+        fw = f0_windows(f0)
     emo, emo_src = emotion_track(path) if do_emotion else (None, "skipped")
 
     n = min(len(db), len(fw))
@@ -239,7 +280,7 @@ def run_one(path, out_dir, do_emotion=True, f0_meter="pyin"):
             })
 
     # 汇总 + sanity 门 + 判读
-    summ = {"file": path.name, "f0_meter": f0_src, "emo_meter": emo_src,
+    summ = {"file": path.name, "f0_meter": f0_src, "f0_scope": f0_scope, "emo_meter": emo_src,
             "n_windows": n, "n_events": len(events)}
     if events:
         decided = [e for e in events if e["with_sink"] is not None]
@@ -289,6 +330,9 @@ def main():
     ap.add_argument("--no-emotion", action="store_true")
     ap.add_argument("--f0", choices=("pyin", "crepe"), default="pyin",
                     help="F0 尺子；pyin 对说话声稳，crepe 对歌唱/乐器好；两种结果不可比")
+    ap.add_argument("--f0-scope", choices=("all", "events"), default="all",
+                    help="all：整片逐窗算 F0（默认）；events：两遍法，只用 db 定位塌事件、"
+                         "只对事件邻窗算 F0（仅 pyin，长片用，判读口径不变）")
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
@@ -296,11 +340,12 @@ def main():
                    if p.suffix.lower() in {".mp4", ".mkv", ".webm", ".flv", ".m4a", ".mp3", ".wav"})
     if not files:
         sys.exit(f"media 目录里没有媒体文件：{args.media}")
-    print(f"素材 {len(files)} 支｜窗口 {WINDOW}s｜判读已先写死（见文件头）")
+    print(f"素材 {len(files)} 支｜窗口 {WINDOW}s｜F0 范围 {args.f0_scope}｜判读已先写死（见文件头）")
 
     summaries = []
     for p in files:
-        summaries.append(run_one(p, args.out, do_emotion=not args.no_emotion, f0_meter=args.f0))
+        summaries.append(run_one(p, args.out, do_emotion=not args.no_emotion,
+                                 f0_meter=args.f0, f0_scope=args.f0_scope))
 
     (args.out / "summary.json").write_text(
         json.dumps({"window_s": WINDOW, "voiced_conf": VOICED_CONF,
