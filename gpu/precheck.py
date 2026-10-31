@@ -15,7 +15,10 @@
 #   0.40–0.60          → 边缘，跑了也只能当探索，判读标 gray
 #   < 0.40             → 不跑，换素材
 #
-# 口径与 run_f0_valence.py 完全一致：16kHz、hop 160(10ms)、torchcrepe full、conf>0.5。
+# 口径与 run_f0_valence.py 默认一致：16kHz、hop 160(10ms)、librosa pyin(fmin 65 / fmax 500)。
+# 为什么不用 crepe：2026-10-31 实测同一段访谈，crepe periodicity 只有 7.0%，
+# 放大 16 倍无变化（排除电平），而 pyin 给出 70.3% / 166.7Hz。crepe 训练集以歌唱/乐器为主，
+# 对纯说话声系统性偏低。两种 meter 的数值不可比。
 #
 # 用法：python3 precheck.py --media ../media [--device cpu]
 import argparse
@@ -68,14 +71,11 @@ def decode(path, start, sec):
     return np.frombuffer(r.stdout, dtype=np.int16).astype(np.float32) / 32768.0
 
 
-def voiced_ratio(x, device):
-    import torch
-    import torchcrepe
-    t = torch.from_numpy(x).unsqueeze(0)
-    _, conf = torchcrepe.predict(
-        t, RATE, hop_length=HOP, batch_size=128, device=device,
-        model="full", return_periodicity=True)
-    return float((conf > VOICED_CONF).float().mean())
+def voiced_ratio(x, device=None):
+    """pyin 判有音高 —— 与正式实验默认口径一致。device 保留仅为调用兼容，pyin 走 CPU。"""
+    import librosa
+    _, vflag, _ = librosa.pyin(x, fmin=65, fmax=500, sr=RATE, hop_length=HOP)
+    return float(np.mean(vflag))
 
 
 def main():

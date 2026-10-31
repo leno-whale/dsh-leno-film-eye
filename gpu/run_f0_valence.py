@@ -66,10 +66,21 @@ def semitone(hz):
 # ---------------------------------------------------------------- 实验一：F0
 
 
-def f0_track(path):
-    """降级链：torchcrepe-full@128 → torchcrepe-tiny@256 → librosa pyin。
-    vGPU 只有 ~2.4G 显存，batch 512 会 OOM——128/256 是按它写的。
-    返回 (f0[n_frames_hop10ms], 来源标签含模型档)。"""
+def f0_track(path, meter="pyin"):
+    """F0 尺子，两种 meter 的结果**不可比**，不许混进同一张表：
+      pyin  —— 默认。对说话声稳。2026-10-31 实测：同一段访谈 pyin voiced 70.3%、f0 中位 166.7Hz。
+      crepe —— 对歌唱/乐器好；对纯说话声 periodicity 系统性偏低
+               （同一段 crepe voiced 仅 7.0%，且放大 16 倍无变化，排除电平问题）。
+    pyin 的 fmax 设 500：说话基频上限约 350Hz，留余量且减少倍频错误；
+    若跑音乐素材再调回 1100 并换标签。
+    返回 (f0[n_frames_hop10ms], 来源标签)。"""
+    if meter == "pyin":
+        import librosa
+        audio = ffmpeg_decode(path, F0_RATE)
+        f0, _, _ = librosa.pyin(audio, fmin=65, fmax=500, sr=F0_RATE, hop_length=F0_HOP)
+        print("    F0: librosa pyin（CPU，fmin 65 / fmax 500）")
+        return np.asarray(f0, dtype=float), "pyin"
+
     try:
         import torch
         import torchcrepe
@@ -97,7 +108,7 @@ def f0_track(path):
     import librosa
     audio = ffmpeg_decode(path, F0_RATE)
     f0, _, _ = librosa.pyin(audio, fmin=65, fmax=1100, sr=F0_RATE, hop_length=F0_HOP)
-    print("    F0: librosa pyin（CPU）")
+    print("    F0: librosa pyin（CPU，回退）")
     return np.asarray(f0, dtype=float), "pyin"
 
 
@@ -165,7 +176,7 @@ def parity_check(db):
     return ok
 
 
-def run_one(path, out_dir, do_emotion=True):
+def run_one(path, out_dir, do_emotion=True, f0_meter="pyin"):
     print(f"  {path.name}")
     x8k = ffmpeg_decode(path, RATE)
     db = window_db(x8k, RATE, WINDOW)
@@ -174,7 +185,7 @@ def run_one(path, out_dir, do_emotion=True):
             sys.exit(1)
 
     ts = np.arange(len(db)) * WINDOW
-    f0, f0_src = f0_track(path)
+    f0, f0_src = f0_track(path, f0_meter)
     fw = f0_windows(f0)
     emo, emo_src = emotion_track(path) if do_emotion else (None, "skipped")
 
@@ -254,6 +265,8 @@ def main():
     ap.add_argument("--media", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--no-emotion", action="store_true")
+    ap.add_argument("--f0", choices=("pyin", "crepe"), default="pyin",
+                    help="F0 尺子；pyin 对说话声稳，crepe 对歌唱/乐器好；两种结果不可比")
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
@@ -265,7 +278,7 @@ def main():
 
     summaries = []
     for p in files:
-        summaries.append(run_one(p, args.out, do_emotion=not args.no_emotion))
+        summaries.append(run_one(p, args.out, do_emotion=not args.no_emotion, f0_meter=args.f0))
 
     (args.out / "summary.json").write_text(
         json.dumps({"window_s": WINDOW, "voiced_conf": VOICED_CONF,
